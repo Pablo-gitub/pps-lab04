@@ -114,8 +114,8 @@ object SchoolModel:
       def hasCourse(name: String): Boolean
   object BasicSchoolModule extends SchoolModule:
     case class SchoolImpl(
-                           courses: Sequence[Course],
-                           teachers: Sequence[Teacher],
+                           sequenceCourses: Sequence[Course],
+                           sequenceTeachers: Sequence[Teacher],
                            teacherToCourses: Sequence[(Teacher, Sequence[Course])]
                          )
     case class TeacherImpl(teacherName: String)
@@ -130,11 +130,11 @@ object SchoolModel:
     def emptySchool: School = SchoolImpl(nil(), nil(), nil())
 
     extension (school: School)
-      def courses: Sequence[String] = school.courses.map(course => course.courseName)
-      def teachers: Sequence[String] = school.teachers.map(teacher => teacher.teacherName)
+      def courses: Sequence[String] = school.sequenceCourses.map(course => course.courseName)
+      def teachers: Sequence[String] = school.sequenceTeachers.map(teacher => teacher.teacherName)
       def setTeacherToCourse(teacher: Teacher, course: Course): School = SchoolImpl(
-        if (school.hasCourse(course.courseName)) school.courses else school.courses.concat(cons(course, nil())),
-        if (school.hasTeacher(teacher.teacherName)) school.teachers else school.teachers.concat(cons(teacher, nil())),
+        if (school.hasCourse(course.courseName)) school.sequenceCourses else school.sequenceCourses.concat(cons(course, nil())),
+        if (school.hasTeacher(teacher.teacherName)) school.sequenceTeachers else school.sequenceTeachers.concat(cons(teacher, nil())),
         if (school.hasTeacher(teacher.teacherName))
           school.teacherToCourses.map {
             case (t, courses) if t == teacher =>
@@ -149,27 +149,27 @@ object SchoolModel:
         school.teacherToCourses
         .filter { case (t, _) => t == teacher }
         .flatMap { case (_, courses) => courses }
-      def hasTeacher(name: String): Boolean = school.teachers.filter(t => t.teacherName == name) != nil()
-      def hasCourse(name: String): Boolean =  school.courses.filter(c => c.courseName == name) != nil()
+      def hasTeacher(name: String): Boolean = school.sequenceTeachers.filter(t => t.teacherName == name) != nil()
+      def hasCourse(name: String): Boolean =  school.sequenceCourses.filter(c => c.courseName == name) != nil()
 @main def examples(): Unit =
   import SchoolModel.BasicSchoolModule.*
   val school = emptySchool
-  println(school.teachers) // Nil()
-  println(school.courses) // Nil()
+  println(school.sequenceTeachers) // Nil()
+  println(school.sequenceCourses) // Nil()
   println(school.hasTeacher("John")) // false
   println(school.hasCourse("Math")) // false
   val john = teacher("John")
   val math = course("Math")
   val italian = course("Italian")
   val school2 = school.setTeacherToCourse(john, math)
-  println(school2.teachers) // Cons("John", Nil())
-  println(school2.courses) // Cons("Math", Nil())
+  println(school2.sequenceTeachers) // Cons("John", Nil())
+  println(school2.sequenceCourses) // Cons("Math", Nil())
   println(school2.hasTeacher("John")) // true
   println(school2.hasCourse("Math")) // true
   println(school2.hasCourse("Italian")) // false
   val school3 = school2.setTeacherToCourse(john, italian)
-  println(school3.teachers) // Cons("John", Nil())
-  println(school3.courses) // Cons("Math", Cons("Italian", Nil()))
+  println(school3.sequenceTeachers) // Cons("John", Nil())
+  println(school3.sequenceCourses) // Cons("Math", Cons("Italian", Nil()))
   println(school3.hasTeacher("John")) // true
   println(school3.hasCourse("Math")) // true
   println(school3.hasCourse("Italian")) // true

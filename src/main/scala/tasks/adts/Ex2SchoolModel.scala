@@ -1,6 +1,8 @@
 package tasks.adts
+import u03.Sequences.Sequence.filter
 import u03.extensionmethods.Optionals.*
 import u03.extensionmethods.Sequences.*
+import u03.extensionmethods.Sequences.Sequence.*
 
 /*  Exercise 2: 
  *  Implement the below trait, and write a meaningful test.
@@ -111,21 +113,44 @@ object SchoolModel:
        */
       def hasCourse(name: String): Boolean
   object BasicSchoolModule extends SchoolModule:
-    override type School = Nothing
-    override type Teacher = Nothing
-    override type Course = Nothing
+    case class SchoolImpl(
+                           courses: Sequence[Course],
+                           teachers: Sequence[Teacher],
+                           teacherToCourses: Sequence[(Teacher, Sequence[Course])]
+                         )
+    case class TeacherImpl(teacherName: String)
+    case class CourseImpl(courseName: String)
 
-    def teacher(name: String): Teacher = ???
-    def course(name: String): Course = ???
-    def emptySchool: School = ???
+    override type School = SchoolImpl
+    override type Teacher = TeacherImpl
+    override type Course = CourseImpl
+
+    def teacher(name: String): Teacher = TeacherImpl(name)
+    def course(name: String): Course = CourseImpl(name)
+    def emptySchool: School = SchoolImpl(nil(), nil(), nil())
 
     extension (school: School)
-      def courses: Sequence[String] = ???
-      def teachers: Sequence[String] = ???
-      def setTeacherToCourse(teacher: Teacher, course: Course): School = ???
-      def coursesOfATeacher(teacher: Teacher): Sequence[Course] = ???
-      def hasTeacher(name: String): Boolean = ???
-      def hasCourse(name: String): Boolean = ???
+      def courses: Sequence[String] = school.courses.map(course => course.courseName)
+      def teachers: Sequence[String] = school.teachers.map(teacher => teacher.teacherName)
+      def setTeacherToCourse(teacher: Teacher, course: Course): School = SchoolImpl(
+        if (school.hasCourse(course.courseName)) school.courses else school.courses.concat(cons(course, nil())),
+        if (school.hasTeacher(teacher.teacherName)) school.teachers else school.teachers.concat(cons(teacher, nil())),
+        if (school.hasTeacher(teacher.teacherName))
+          school.teacherToCourses.map {
+            case (t, courses) if t == teacher =>
+              if (courses.filter(c => c == course) != nil()) (t, courses)
+              else (t, courses.concat(cons(course, nil())))
+            case other => other
+          }
+          else
+          school.teacherToCourses.concat(cons((teacher, cons(course, nil())), nil()))
+      )
+      def coursesOfATeacher(teacher: Teacher): Sequence[Course] =
+        school.teacherToCourses
+        .filter { case (t, _) => t == teacher }
+        .flatMap { case (_, courses) => courses }
+      def hasTeacher(name: String): Boolean = school.teachers.filter(t => t.teacherName == name) != nil()
+      def hasCourse(name: String): Boolean =  school.courses.filter(c => c.courseName == name) != nil()
 @main def examples(): Unit =
   import SchoolModel.BasicSchoolModule.*
   val school = emptySchool

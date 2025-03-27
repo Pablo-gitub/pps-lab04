@@ -24,26 +24,23 @@ package u04.monads
   yield events
 
 
+  def handleEvent(e: String): State[(Counter, Window), Unit] = e match
+    case "IncButton" => mv(seq(inc(), get()), i => toLabel(i.toString, "Label1"))
+    case "DecButton" => mv(seq(dec(), get()), i => toLabel(i.toString, "Label1"))
+    case "ResetButton" => mv(seq(reset(), get()), i => toLabel(i.toString, "Label1"))
+    case "SetButton" =>
+      mv(nop(), _ => getTextFieldContent("TextField")).flatMap { txt =>
+        txt.toIntOption match
+          case Some(value) =>
+            mv(seq(set(value), get()), i => toLabel(i.toString, "Label1"))
+          case None =>
+            mv(nop(), _ => toLabel("Not valid value!", "Label1"))
+      }
+    case "QuitButton" => mv(nop(), _ => exec(sys.exit()))
+
   val controller = for
     events <- mv(seq(reset(), get()), i => windowCreation(i.toString()))
-    _ <- seqN(events.map {
-      case "IncButton" =>
-        mv(seq(inc(), get()), i => toLabel(i.toString, "Label1"))
-      case "DecButton" =>
-        mv(seq(dec(), get()), i => toLabel(i.toString, "Label1"))
-      case "ResetButton" =>
-        mv(seq(reset(), get()), i => toLabel(i.toString, "Label1"))
-      case "SetButton" =>
-        mv(nop(), _ => getTextFieldContent("TextField")).flatMap { txt =>
-          txt.toIntOption match
-            case Some(value) =>
-              mv(seq(set(value), get()), i => toLabel(i.toString, "Label1"))
-            case None =>
-              mv(nop(), _ => toLabel("Not valid value!", "Label1"))
-        }
-      case "QuitButton" =>
-        mv(nop(), _ => exec(sys.exit()))
-    })
+    _ <- seqN(events.map(handleEvent))
   yield ()
 
 

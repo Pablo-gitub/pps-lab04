@@ -10,7 +10,7 @@ package u04.monads
       val (sv2, av) = f(am).run(sv)
       ((sm2, sv2), av)
 
-  def windowCreation(str: String): State[Window, Stream[String]] = for 
+  def windowCreation(str: String): State[Window, Stream[String]] = for
     _ <- setSize(300, 300)
     _ <- addButton(text = "inc", name = "IncButton")
     _ <- addButton(text = "dec", name = "DecButton")
@@ -23,21 +23,29 @@ package u04.monads
     events <- eventStream()
   yield events
 
+
   val controller = for
     events <- mv(seq(reset(), get()), i => windowCreation(i.toString()))
-    _ <- seqN(events.map(_ match
-        case "IncButton" => mv(seq(inc(), get()), i => toLabel(i.toString, "Label1"))
-        case "DecButton" => mv(seq(dec(), get()), i => toLabel(i.toString, "Label1"))
-        case "ResetButton" => mv(seq(reset(), get()), i => toLabel(i.toString, "Label1"))
-        case "SetButton" =>
-          mv(nop(), _ => getTextFieldContent("TextField")).flatMap { txt =>
-            txt.toIntOption match
-              case Some(value) =>
-                mv(seq(set(value), get()), i => toLabel(i.toString, "Label1"))
-              case None =>
-                mv(nop(), _ => toLabel("Not valid value!", "Label1"))
-          }
-        case "QuitButton" => mv(nop(), _ => exec(sys.exit()))))
+    _ <- seqN(events.map {
+      case "IncButton" =>
+        mv(seq(inc(), get()), i => toLabel(i.toString, "Label1"))
+      case "DecButton" =>
+        mv(seq(dec(), get()), i => toLabel(i.toString, "Label1"))
+      case "ResetButton" =>
+        mv(seq(reset(), get()), i => toLabel(i.toString, "Label1"))
+      case "SetButton" =>
+        mv(nop(), _ => getTextFieldContent("TextField")).flatMap { txt =>
+          txt.toIntOption match
+            case Some(value) =>
+              mv(seq(set(value), get()), i => toLabel(i.toString, "Label1"))
+            case None =>
+              mv(nop(), _ => toLabel("Not valid value!", "Label1"))
+        }
+      case "QuitButton" =>
+        mv(nop(), _ => exec(sys.exit()))
+    })
   yield ()
+
+
 
   controller.run((initialCounter(), initialWindow))

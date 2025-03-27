@@ -13,6 +13,8 @@ trait WindowState:
   def show(): State[Window, Unit]
   def exec(cmd: =>Unit): State[Window, Unit]
   def eventStream(): State[Window, Stream[String]]
+  def addTextField(name: String): State[Window, Unit]
+  def getTextFieldContent(name: String): State[Window, String]
 
 object WindowStateImpl extends WindowState:
   import SwingFunctionalFacade.*
@@ -36,7 +38,12 @@ object WindowStateImpl extends WindowState:
     State(w => (w, cmd))  
   def eventStream(): State[Window, Stream[String]] =
     State(w => (w, Stream.generate(() => w.events().get)))
-  
+  def addTextField(name: String): State[Window, Unit] =
+    State(w => ((w.addTextField(name)), {}))
+  def getTextFieldContent(name: String): State[Window, String] =
+    State(w => (w, w.getTextFieldContent(name)))
+
+
 @main def windowStateExample =
   import u04.*
   import WindowStateImpl.*
